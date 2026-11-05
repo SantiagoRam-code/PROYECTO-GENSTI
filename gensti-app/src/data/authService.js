@@ -1,68 +1,38 @@
+const API_BASE_URL = 'http://127.0.0.1:8000/api/';
 
-// Validación estricta de dominios UCC
-export const validateUccEmail = (email) => {
-  const cleanEmail = email.trim().toLowerCase();
-  
-  if (cleanEmail.endsWith("@campusucc.edu.co")) {
-    return { isValid: true, role: "student", domainLabel: "Estudiante UCC" };
+export const loginUser = async (username, password) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}login/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password })
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || 'Error al iniciar sesión');
+    return data;
+  } catch (error) {
+    console.error('Error en loginUser:', error);
+    throw error;
   }
-  
-  if (cleanEmail.endsWith("@ucc.edu.co")) {
-    return { isValid: true, role: "admin", domainLabel: "Profesor / Administrativo UCC" };
+};
+
+export const registerUser = async (userData) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}register/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        username: userData.username,
+        password: userData.password,
+        email: userData.email,
+        name: userData.name
+      })
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || 'Error al registrar usuario');
+    return data;
+  } catch (error) {
+    console.error('Error en registerUser:', error);
+    throw error;
   }
-
-  return { 
-    isValid: false, 
-    role: null, 
-    error: "El correo debe terminar en @campusucc.edu.co (Estudiantes) o @ucc.edu.co (Profesores)." 
-  };
-};
-
-// Obtener usuarios guardados
-export const getStoredUsers = () => {
-  const users = localStorage.getItem("gensti_registered_users");
-  return users ? JSON.parse(users) : [
-    {
-      name: "Thomas Santiago Ramirez Ruiz",
-      email: "thomas.santi@campusucc.edu.co",
-      password: "123",
-      role: "student"
-    },
-    {
-      name: "Coordinación Académica UCC",
-      email: "coordinacion@ucc.edu.co",
-      password: "123",
-      role: "admin"
-    }
-  ];
-};
-
-// Guardar nuevo usuario
-export const registerUser = (name, email, password) => {
-  const validation = validateUccEmail(email);
-  if (!validation.isValid) throw new Error(validation.error);
-
-  const users = getStoredUsers();
-  const exists = users.some(u => u.email.toLowerCase() === email.trim().toLowerCase());
-  if (exists) throw new Error("Este correo institucional ya se encuentra registrado.");
-
-  const newUser = {
-    name,
-    email: email.trim().toLowerCase(),
-    password,
-    role: validation.role
-  };
-
-  users.push(newUser);
-  localStorage.setItem("gensti_registered_users", JSON.stringify(users));
-  return newUser;
-};
-
-// Iniciar Sesión
-export const loginUser = (email, password) => {
-  const users = getStoredUsers();
-  const user = users.find(u => u.email.toLowerCase() === email.trim().toLowerCase() && u.password === password);
-  
-  if (!user) throw new Error("Credenciales inválidas. Verifica tu correo y contraseña.");
-  return user;
 };
